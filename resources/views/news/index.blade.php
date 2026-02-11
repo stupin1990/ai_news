@@ -7,7 +7,7 @@
         <span class="text-sm text-gray-600 dark:text-[#A1A09A]">{{ auth()->user()->name }}</span>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="text-sm text-gray-500 underline underline-offset-4 hover:text-gray-700 dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]">
+            <button type="submit" class="text-sm cursor-pointer text-gray-500 underline underline-offset-4 hover:text-gray-700 dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]">
                 Logout
             </button>
         </form>
