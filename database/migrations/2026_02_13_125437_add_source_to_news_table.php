@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('news', function (Blueprint $table) {
-            $table->dropUnique('news_external_id_unique');
-            $table->unique('slug');
+            $table->string('source', 50);
         });
     }
 
@@ -23,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('news', function (Blueprint $table) {
-            $table->dropUnique('news_slug_unique');
+            $table->dropColumn('source');
         });
     }
 };

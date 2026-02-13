@@ -18,6 +18,7 @@ class News extends Model
         'external_id',
         'content',
         'status',
+        'source',
         'published_at',
     ];
 

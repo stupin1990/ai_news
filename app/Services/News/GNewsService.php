@@ -1,28 +1,18 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\News;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class GNewsService
+class GNewsService extends NewsService
 {
-    private string $apiKey;
-    private string $baseUrl = 'https://gnews.io/api/v4/';
 
-    public function __construct()
-    {
-        $this->apiKey = config('services.gnews.apikey');
-    }
+    public static string $lastNewsUrl = 'https://gnews.io/api/v4/top-headlines';
+    public static string $name = 'gnewsio';
 
-    /**
-     * Serialize news item to model format
-     * @param array $newsItem
-     * 
-     * @return array [id, title, url, image, publishedAt]
-     */
     public function serializeItem(array $newsItem): array
     {
         if (empty($newsItem['id']) || empty($newsItem['title']) || empty($newsItem['url']) || empty($newsItem['publishedAt'])) {
@@ -30,6 +20,7 @@ class GNewsService
         }
 
         return [
+            'source' => self::$name,
             'external_id'  => $newsItem['id'],
             'title'        => $newsItem['title'],
             'slug'         => Str::slug($newsItem['title']),
@@ -39,12 +30,7 @@ class GNewsService
         ];
     }
 
-    /**
-     * Get last news from gnews api.
-     * @param string $lang
-     * @return array [id, title, url, image, publishedAt]
-     */
-    public function getLastNews(string $lang = 'en', int $page = 1): array
+    public function getLastNews(string $lang = 'en'): array
     {
         /** @var array */
         $result = [];
@@ -52,15 +38,13 @@ class GNewsService
         try {
             /** @var \Illuminate\Http\Client\Response|\GuzzleHttp\Promise\PromiseInterface */
             $response = Http::timeout(10)->retry(3, 100)
-                ->get($this->baseUrl . 'top-headlines', [
+                ->get(self::$lastNewsUrl, [
                     'lang'     => $lang,
-                    'max'      => 10,
                     'apikey'   => $this->apiKey,
-                    'page'     => $page
                 ]);
 
             if ($response->failed()) {
-                if ($response->status() !== 403 && $response->status() !== 403) {
+                if ($response->status() !== 403 && $response->status() !== 429) {
                     Log::error("GNews API Error: " . $response->body());
                 }
                 return [];
@@ -86,33 +70,18 @@ class GNewsService
         }
     }
 
-
-    /**
-     * Mock data for get last news.
-     * @param string $lang
-     * @param int $page
-     * @return array [external_id, title, url, image, published_at]
-     */
-    public function getLastNewsMock(string $lang = 'en', int $page = 1): array
-    {
-        $items = [
-            [
-                'id' => "mock-{$page}-1",
-                'title' => "Mock news {$page}-1",
-                'url' => "https://example.test/{$page}/1",
-                'image' => "https://example.test/images/{$page}-1.jpg",
-                'publishedAt' => Carbon::now()->subMinutes($page)->toIso8601String(),
+    public static function getLastNewsMock(): array {
+        return [
+            'articles' => [
+                [
+                    'id' => 'mock-1',
+                    'title' => 'Mock news 1',
+                    'url' => 'https://example.test/1',
+                    'image' => 'https://example.test/images/1.jpg',
+                    'publishedAt' => now()->toIso8601String(),
+                ],
             ],
         ];
-
-        $result = [];
-        foreach ($items as $item) {
-            $result[] = $this->serializeItem($item);
-        }
-
-        return array_values(array_filter($result, function (array $item): bool {
-            return count($item) > 0;
-        }));
     }
 
 }

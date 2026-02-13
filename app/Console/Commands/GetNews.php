@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\News;
-use App\Services\GNewsService;
 use Illuminate\Console\Command;
 
 class GetNews extends Command
@@ -22,22 +21,36 @@ class GetNews extends Command
      */
     protected $description = 'Get last news from api';
 
+    const array NEWS_SERVICES = [
+        \App\Services\News\GNewsService::class,
+        \App\Services\News\NewsDataService::class
+    ];
+
     /**
      * Execute the console command.
      */
-    public function handle(GNewsService $gNewsService): int
+    public function handle(): int
     {
-        echo 'Get news from gNews: ';
 
-        $data = $gNewsService->getLastNews();
+        foreach (self::NEWS_SERVICES as $serviceClass) {
 
-        if (!count($data)) {
-             echo 'Fail' . PHP_EOL;
-             return self::FAILURE;
+            $service = new $serviceClass;
+
+            echo 'Get news from ' . $serviceClass::$name . ': ';
+
+            $data = $service->getLastNews();
+
+            if (!count($data)) {
+                echo 'Fail' . PHP_EOL;
+                continue;
+            }
+
+            $before = News::count();
+            News::upsert($data, uniqueBy: ['slug'], update: ['title', 'slug', 'source_url', 'image', 'published_at', 'source']);
+            $after = News::count();
+
+            echo 'Ok (' . ($after - $before) .  ' added)' . PHP_EOL;
         }
-
-        News::upsert($data, uniqueBy: ['external_id'], update: ['title', 'slug', 'content', 'source_url', 'image', 'published_at']);
-        echo 'Ok (' . count($data) .  ')' . PHP_EOL;
 
         return self::SUCCESS;
     }
