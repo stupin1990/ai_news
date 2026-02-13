@@ -16,13 +16,12 @@ return new class extends Migration
             $table->foreignId('cat_id')->constrained(
                 table: 'categories', column: 'id'
             );
-            $table->string('title');
-            $table->string('slug');
-            $table->string('image')->nullable();
-            $table->string('source_url');
+            $table->string('title', 1000);
+            $table->string('slug', 1000);
+            $table->string('image', 1000)->nullable();
+            $table->string('source_url', 1000);
             $table->string('external_id')->index();
-            $table->text('content');
-            $table->text('ai_content')->nullable();
+            $table->text('content')->nullable();
             $table->tinyInteger('status')->default(0);
             $table->timestampTz('published_at');
         });

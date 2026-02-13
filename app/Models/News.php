@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class News extends Model
 {
@@ -11,14 +11,12 @@ class News extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'cat_id',
         'title',
         'slug',
         'image',
         'source_url',
         'external_id',
         'content',
-        'ai_content',
         'status',
         'published_at',
     ];
@@ -31,8 +29,8 @@ class News extends Model
         ];
     }
 
-    public function category(): BelongsTo
+    public function categories(): BelongsToMany
     {
-        return $this->belongsTo(Category::class, 'cat_id');
+        return $this->belongsToMany(Category::class, 'news_categories', 'news_id', 'cat_id');
     }
 }

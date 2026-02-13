@@ -41,4 +41,7 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'gnews' => [
+        'apikey' => env('GNEWS_API_KEY'),
+    ]
 ];

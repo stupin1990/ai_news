@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
@@ -21,8 +20,8 @@ class Category extends Model
         return $this->belongsToMany(User::class, 'users_categories', 'cat_id', 'user_id');
     }
 
-    public function news(): HasMany
+    public function news(): BelongsToMany
     {
-        return $this->hasMany(News::class, 'cat_id');
+        return $this->belongsToMany(News::class, 'news_categories', 'cat_id', 'news_id');
     }
 }
