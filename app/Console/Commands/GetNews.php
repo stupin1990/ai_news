@@ -2,8 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\NewsStatus;
 use App\Models\News;
 use Illuminate\Console\Command;
+use App\Jobs\GetNewsContent;
+use Illuminate\Support\Facades\Log;
 
 class GetNews extends Command
 {
@@ -31,7 +34,10 @@ class GetNews extends Command
      */
     public function handle(): int
     {
-
+        /** @var int */
+        $added = 0;
+         /** @var int */
+        $totalAdded = 0;
         foreach (self::NEWS_SERVICES as $serviceClass) {
 
             $service = new $serviceClass;
@@ -49,8 +55,18 @@ class GetNews extends Command
             News::upsert($data, uniqueBy: ['slug'], update: ['title', 'slug', 'source_url', 'image', 'published_at', 'source']);
             $after = News::count();
 
-            echo 'Ok (' . ($after - $before) .  ' added)' . PHP_EOL;
+            $added = $after - $before;
+            $totalAdded += $added;
+
+            echo 'Ok (' . $added .  ' added)' . PHP_EOL;
         }
+        echo 'Total added: ' . $totalAdded . PHP_EOL;
+
+        $news = News::where('status', NewsStatus::NEW->value)->get();
+        $news->map(function (News $item) {
+            echo 'Dispatch GetNewsContent: ' . $item->id . PHP_EOL;
+            GetNewsContent::dispatch($item)->onQueue('GetNewsContent');
+        });
 
         return self::SUCCESS;
     }

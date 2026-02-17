@@ -47,5 +47,9 @@ return [
 
     'newsdataio' => [
         'apikey' => env('NEWSDATA_API_KEY'),
+    ],
+
+    'rjina' => [
+        'apikey' => env('RJINA_API_KEY'),
     ]
 ];

@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('news', function (Blueprint $table) {
-            $table->dropForeign(['cat_id']);
-            $table->dropColumn('cat_id');
+            $table->timestamps();
         });
     }
 
@@ -23,6 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('news', function (Blueprint $table) {
+            //
         });
     }
 };

@@ -4,11 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Enums\NewsStatus;
 
 class News extends Model
 {
-    public $timestamps = false;
-
     /** @var list<string> */
     protected $fillable = [
         'title',
@@ -16,7 +15,8 @@ class News extends Model
         'image',
         'source_url',
         'external_id',
-        'content',
+        'raw_content',
+        'ai_content',
         'status',
         'source',
         'published_at',
@@ -25,7 +25,7 @@ class News extends Model
     protected function casts(): array
     {
         return [
-            'status' => 'integer',
+            'status' => NewsStatus::class,
             'published_at' => 'datetime',
         ];
     }
