@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Console\Commands\GetNews;
+use App\Jobs\GetNewsContent;
 use App\Models\News;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class GetNewsCommandTest extends TestCase
@@ -15,15 +17,19 @@ class GetNewsCommandTest extends TestCase
     /**
      * A basic feature test example.
      */
-    public function test_get_news_command_persists_mocked_data(): void
+    public function test_get_news_command_persists_mocked_data_without_executing_jobs(): void
     {
+        Queue::fake();
+
+        $responses = [];
         foreach (GetNews::NEWS_SERVICES as $serviceClass) {
-            Http::fake([
-                $serviceClass::$lastNewsUrl . '*' => Http::response($serviceClass::getLastNewsMock(), 200)
-            ]);
+            $responses[$serviceClass::$lastNewsUrl . '*'] = Http::response($serviceClass::getLastNewsMock(), 200);
         }
 
-        $this->artisan('app:get-news')->assertExitCode(0);
+        Http::preventStrayRequests();
+        Http::fake($responses);
+
+        $this->artisan('app:get-news')->assertSuccessful();
 
         $this->assertDatabaseCount('news', 2);
 
@@ -32,5 +38,7 @@ class GetNewsCommandTest extends TestCase
 
         $this->assertNotNull($newsFirst);
         $this->assertNotNull($newsSecond);
+
+        Queue::assertPushed(GetNewsContent::class, 2);
     }
 }

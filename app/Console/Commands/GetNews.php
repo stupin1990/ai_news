@@ -23,8 +23,8 @@ class GetNews extends Command
      */
     protected $description = 'Get last news from api';
 
-    /** @var array<NewsService> */
-    const array NEWS_SERVICES = [
+    /** @var array<class-string<NewsService>> */
+    public const NEWS_SERVICES = [
         \App\Services\News\GNewsService::class,
         \App\Services\News\NewsDataService::class
     ];
