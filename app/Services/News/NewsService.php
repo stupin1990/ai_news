@@ -4,6 +4,9 @@ namespace App\Services\News;
 
 use Illuminate\Support\Carbon;
 
+/**
+ * @phpstan-type serializedItem array{source:string,external_id:string,title:string,slug:string,source_url:string,image:string,published_at:string}
+ */
 abstract class NewsService
 {
     protected string $apiKey;
@@ -20,21 +23,21 @@ abstract class NewsService
      * Serialize news item to model format
      * @param array $newsItem
      * 
-     * @return array [source, external_id, title, slug, source_url, image, published_at]
+     * @return serializedItem
      */
     abstract function serializeItem(array $newsItem): array;
 
     /**
      * Get last news
      * @param string $lang
-     * @return array[] [source, external_id, title, slug, source_url, image, published_at]
+     * @return list<serializedItem>
      */
     abstract function getLastNews(string $lang = 'en'): array;
 
 
     /**
      * Mock data for get last news
-     * @return array[] [source, external_id, title, slug, source_url, image, published_at]
+     * @return list<serializedItem>
      */
     abstract static function getLastNewsMock(): array;
 

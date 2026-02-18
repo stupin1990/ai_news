@@ -2,11 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\NewsStatus;
 use App\Models\News;
 use Illuminate\Console\Command;
 use App\Jobs\GetNewsContent;
-use Illuminate\Support\Facades\Log;
+use App\Services\News\NewsService;
 
 class GetNews extends Command
 {
@@ -24,6 +23,7 @@ class GetNews extends Command
      */
     protected $description = 'Get last news from api';
 
+    /** @var array<NewsService> */
     const array NEWS_SERVICES = [
         \App\Services\News\GNewsService::class,
         \App\Services\News\NewsDataService::class
@@ -36,8 +36,11 @@ class GetNews extends Command
     {
         /** @var int */
         $added = 0;
-         /** @var int */
+        /** @var int */
         $totalAdded = 0;
+        /** @var array */
+        $slugs = [];
+
         foreach (self::NEWS_SERVICES as $serviceClass) {
 
             $service = new $serviceClass;
@@ -51,6 +54,8 @@ class GetNews extends Command
                 continue;
             }
 
+            $slugs = array_merge($slugs, collect($data)->pluck('slug')->all());
+
             $before = News::count();
             News::upsert($data, uniqueBy: ['slug'], update: ['title', 'slug', 'source_url', 'image', 'published_at', 'source']);
             $after = News::count();
@@ -62,7 +67,7 @@ class GetNews extends Command
         }
         echo 'Total added: ' . $totalAdded . PHP_EOL;
 
-        $news = News::where('status', NewsStatus::NEW->value)->get();
+        $news = News::whereIn('slug', $slugs)->get();
         $news->map(function (News $item) {
             echo 'Dispatch GetNewsContent: ' . $item->id . PHP_EOL;
             GetNewsContent::dispatch($item)->onQueue('GetNewsContent');

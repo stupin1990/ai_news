@@ -15,15 +15,14 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $names = [
-            'General',
-            'World',
-            'Nation',
-            'Business',
+            'Politics',
+            'Economics & Business',
             'Technology',
-            'Entertainment',
-            'Sports',
             'Science',
-            'Health',
+            'Sports',
+            'Entertainment',
+            'Society',
+            'World News'
         ];
 
         foreach ($names as $name) {

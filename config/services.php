@@ -51,5 +51,9 @@ return [
 
     'rjina' => [
         'apikey' => env('RJINA_API_KEY'),
-    ]
+    ],
+
+    'deepseek' => [
+        'apikey' => env('DEEPSEEK_API_KEY'),
+    ],
 ];

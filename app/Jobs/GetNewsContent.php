@@ -17,6 +17,8 @@ class GetNewsContent implements ShouldQueue, ShouldBeUnique
 
     private News $item;
 
+    private string $rJinaUrl = 'https://r.jina.ai/';
+
     /**
      * Create a new job instance.
      */
@@ -50,7 +52,9 @@ class GetNewsContent implements ShouldQueue, ShouldBeUnique
                 'X-Retain-Images' => 'none',
                 'X-User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'X-Referer' => 'https://www.google.com/'
-            ])->timeout(60)->get('https://r.jina.ai/' . $this->item->source_url);
+            ])
+            ->timeout(60)
+            ->get($this->rJinaUrl . $this->item->source_url);
             
             $response->throw();
 
@@ -65,6 +69,8 @@ class GetNewsContent implements ShouldQueue, ShouldBeUnique
                 'raw_content' => $content,
                 'status' => NewsStatus::CONTENT_PARSED,
             ]);
+
+            GetAiNewsContent::dispatch($this->item)->onQueue('GetNewsAiContent');
         } catch (Throwable $e) {
             $this->item->update([
                 'status' => NewsStatus::CONTENT_ERROR,
