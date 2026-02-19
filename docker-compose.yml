@@ -85,6 +85,28 @@ services:
     networks:
       - ai_news_network
 
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: ai_news_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-guest}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:-guest}"
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_VHOST:-/}"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ai_news_network
+
   # Queue Worker
   queue:
     build:
@@ -93,10 +115,12 @@ services:
       args:
           WWWUSER: "${WWWUSER:-1000}"
           WWWGROUP: "${WWWGROUP:-1000}"
-    container_name: ai_news_queue
+    #container_name: ai_news_queue
     restart: unless-stopped
     working_dir: /var/www/html
     command: php artisan queue:work --queue=GetNewsAiContent,GetNewsContent --tries=3 --backoff=10
+    deploy:
+      replicas: 10
     volumes:
       - ./:/var/www/html
     extra_hosts:
@@ -104,6 +128,7 @@ services:
     depends_on:
       - php
       - redis
+      - rabbitmq
     networks:
       - ai_news_network
 
@@ -188,6 +213,8 @@ volumes:
   php_socket:
     driver: local
   pgadmin_data:
+    driver: local
+  rabbitmq_data:
     driver: local
 
 networks:

@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Models\News;
-use Illuminate\Console\Command;
 use App\Jobs\GetNewsContent;
+use App\Models\News;
 use App\Services\News\NewsService;
+use Illuminate\Console\Command;
 
 class GetNews extends Command
 {
@@ -54,7 +54,11 @@ class GetNews extends Command
                 continue;
             }
 
-            $slugs = array_merge($slugs, collect($data)->pluck('slug')->all());
+            $data = collect($data);
+
+            $slugs = array_merge($slugs, $data->pluck('slug')->all());
+
+            $data = $data->unique('slug')->values()->all();
 
             $before = News::count();
             News::upsert($data, uniqueBy: ['slug'], update: ['title', 'slug', 'source_url', 'image', 'published_at', 'source']);
@@ -63,14 +67,15 @@ class GetNews extends Command
             $added = $after - $before;
             $totalAdded += $added;
 
-            echo 'Ok (' . $added .  ' added)' . PHP_EOL;
+            echo 'Ok (' . $added . ' added)' . PHP_EOL;
         }
         echo 'Total added: ' . $totalAdded . PHP_EOL;
 
         $news = News::whereIn('slug', $slugs)->get();
         $news->map(function (News $item) {
-            echo 'Dispatch GetNewsContent: ' . $item->id . PHP_EOL;
-            GetNewsContent::dispatch($item)->onQueue('GetNewsContent');
+            echo 'Dispatch GetNewsContent: '.$item->id.PHP_EOL;
+            GetNewsContent::dispatch($item)
+                ->onQueue('GetNewsContent');
         });
 
         return self::SUCCESS;

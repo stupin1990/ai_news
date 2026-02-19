@@ -44,25 +44,24 @@ class GetNewsContent implements ShouldQueue, ShouldBeUnique
         try {
             /** @var \Illuminate\Http\Client\Response|\GuzzleHttp\Promise\PromiseInterface */
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.rjina.apikey'),
+                'Authorization' => 'Bearer '.config('services.rjina.apikey'),
                 'X-Return-Format' => 'markdown',
                 'X-With-Links-Summary' => false,
                 'X-No-Cache' => true,
                 'Accept' => 'application/json',
                 'X-Retain-Images' => 'none',
                 'X-User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'X-Referer' => 'https://www.google.com/'
+                'X-Referer' => 'https://www.google.com/',
             ])
             ->timeout(60)
             ->get($this->rJinaUrl . $this->item->source_url);
-            
+
             $response->throw();
 
             $data = $response->json();
             if (empty($data['data']['content'])) {
                 throw new \Exception('No content:' . $this->item->source_url);
-            }
-            elseif (!empty($data['data']['warning'])) {
+            } elseif (!empty($data['data']['warning'])) {
                 throw new \Exception('Content error (' . $this->item->source_url . '): ' . empty($data['data']['warning']));
             }
 
@@ -73,7 +72,8 @@ class GetNewsContent implements ShouldQueue, ShouldBeUnique
                 'status' => NewsStatus::CONTENT_PARSED,
             ]);
 
-            GetAiNewsContent::dispatch($this->item)->onQueue('GetNewsAiContent');
+            GetAiNewsContent::dispatch($this->item)
+                ->onQueue('GetNewsAiContent');
         } catch (Throwable $e) {
             $this->item->update([
                 'status' => NewsStatus::CONTENT_ERROR,

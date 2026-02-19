@@ -52,6 +52,7 @@ RUN docker-php-ext-install -j$(nproc) \
     bcmath \
     opcache \
     pcntl \
+    sockets \
     exif
 
 # Install Xdebug and Redis via PECL

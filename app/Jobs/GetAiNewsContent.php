@@ -42,7 +42,7 @@ class GetAiNewsContent implements ShouldQueue, ShouldBeUnique
         ]);
 
         /** @var array<int,string> */
-        $categories = Cache::store('redis')->remember(
+        $categories = Cache::remember(
             'ai_news:categories',
             now()->addHour(),
             function (): array {

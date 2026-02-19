@@ -27,7 +27,7 @@ class TestAiGenerate extends Command
      */
     public function handle(): int
     {
-        $item = News::find(294);
+        $item = News::find(351);
         GetAiNewsContent::dispatchSync($item);
 
         return self::SUCCESS;
