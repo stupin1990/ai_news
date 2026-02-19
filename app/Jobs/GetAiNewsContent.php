@@ -9,6 +9,7 @@ use App\Services\DeepSeekService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -41,7 +42,13 @@ class GetAiNewsContent implements ShouldQueue, ShouldBeUnique
         ]);
 
         /** @var array<int,string> */
-        $categories = Category::pluck('name', 'id')->all();
+        $categories = Cache::store('redis')->remember(
+            'ai_news:categories',
+            now()->addHour(),
+            function (): array {
+                return Category::pluck('name', 'id')->all();
+            }
+        );
         $rCategories = array_flip($categories);
 
         $promt = [

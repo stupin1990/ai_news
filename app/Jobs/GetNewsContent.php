@@ -62,6 +62,9 @@ class GetNewsContent implements ShouldQueue, ShouldBeUnique
             if (empty($data['data']['content'])) {
                 throw new \Exception('No content:' . $this->item->source_url);
             }
+            elseif (!empty($data['data']['warning'])) {
+                throw new \Exception('Content error (' . $this->item->source_url . '): ' . empty($data['data']['warning']));
+            }
 
             $content = $this->stripMarkdownLinks($data['data']['content']);
 
