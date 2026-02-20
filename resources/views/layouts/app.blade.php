@@ -5,9 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Ai News') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @viteReactRefresh
+    @vite(['resources/react/app.tsx'])
 </head>
 <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen font-sans antialiased">
-    @yield('content')
+    <div id="app"></div>
+    <script>
+        window.__INITIAL_PAGE__ = {{ Js::from([
+            'page' => $page ?? 'NewsPage',
+            'props' => $props ?? [],
+        ]) }};
+    </script>
 </body>
 </html>
