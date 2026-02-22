@@ -27,4 +27,6 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/', [NewsController::class, 'index'])->name('home');
+    Route::get('/news/feed', [NewsController::class, 'feed'])->name('news.feed');
+    Route::put('/news/categories', [NewsController::class, 'updateCategories'])->name('news.categories.update');
 });

@@ -45,9 +45,7 @@ class GetAiNewsContent implements ShouldQueue, ShouldBeUnique
         $categories = Cache::remember(
             'ai_news:categories',
             now()->addHour(),
-            function (): array {
-                return Category::pluck('name', 'id')->all();
-            }
+            fn (): array => Category::pluck('name', 'id')->all()
         );
         $rCategories = array_flip($categories);
 

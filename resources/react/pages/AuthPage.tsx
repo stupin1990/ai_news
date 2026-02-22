@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCsrfToken } from '../utils/csrf';
 import { EmailForm, ErrorsAlert, LoginButtons, RegisterForm, PasswordForm, StatusAlert } from './components';
 
@@ -66,11 +66,11 @@ export function AuthPage({
     routes,
     viewPaths,
 }: AuthPageProps) {
-    const csrfToken = getCsrfToken();
     const [currentView, setCurrentView] = useState<AuthView>(initialView);
     const [currentErrors, setCurrentErrors] = useState<string[]>(errors);
     const [currentStatus, setСurrentStatus] = useState<string | undefined>(status);
 
+    const csrfToken = useMemo(() => getCsrfToken(), []);
     const pathToView = useMemo(() => {
         return {
             [viewPaths.buttons]: 'buttons',
@@ -80,7 +80,7 @@ export function AuthPage({
         } as Record<string, AuthView>;
     }, [viewPaths]);
 
-    const switchView: SwitchView = (view: AuthView, pushHistory: boolean): void => {
+    const switchView: SwitchView = useCallback((view: AuthView, pushHistory: boolean): void => {
         setCurrentView(view);
         setCurrentErrors([]);
         setСurrentStatus(undefined);
@@ -88,7 +88,7 @@ export function AuthPage({
         if (pushHistory && window.location.pathname !== viewPaths[view]) {
             window.history.pushState(null, '', viewPaths[view]);
         }
-    };
+    }, [viewPaths]);
 
     useEffect(() => {
         const onPopState = (): void => {
