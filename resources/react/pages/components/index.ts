@@ -10,4 +10,5 @@ export { CategoryFilter } from './CategoryFilter';
 export { NewsList } from './NewsList';
 export { NewsHeader } from './NewsHeader';
 export { ScrollTopButton } from './ScrollTopButton';
+export { NewArticlesBadge } from './NewArticlesBadge';
 

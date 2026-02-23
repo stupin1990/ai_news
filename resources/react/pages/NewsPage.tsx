@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getCsrfToken } from '../utils/csrf';
-import { CategoryFilter, NewsHeader, NewsList, ScrollTopButton } from './components';
+import { CategoryFilter, NewArticlesBadge, NewsHeader, NewsList, ScrollTopButton } from './components';
 
 export interface Category {
     id: number;
@@ -44,10 +44,43 @@ export function NewsPage({
     initialNews,
     routes,
 }: NewsPageProps) {
+
+    const toTimestamp = useCallback((value: string | null): number | null => {
+        if (value === null) {
+            return null;
+        }
+
+        const timestamp = new Date(value).getTime();
+
+        return Number.isNaN(timestamp) ? null : timestamp;
+    }, []);
+
+    const getLatestPublishedAt = useCallback((items: NewsItem[]): string | null => {
+        let latestPublishedAt: string | null = null;
+        let latestTimestamp: number | null = null;
+
+        items.forEach((item) => {
+            const itemTimestamp = toTimestamp(item.publishedAt);
+
+            if (itemTimestamp === null) {
+                return;
+            }
+
+            if (latestTimestamp === null || itemTimestamp > latestTimestamp) {
+                latestTimestamp = itemTimestamp;
+                latestPublishedAt = item.publishedAt;
+            }
+        });
+
+        return latestPublishedAt;
+    }, [toTimestamp]);
+
     const csrfToken = useMemo(() => getCsrfToken(), []);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [activeCategoryIds, setActiveCategoryIds] = useState<number[]>(selectedCategoryIds);
     const [newsItems, setNewsItems] = useState<NewsItem[]>(initialNews.items);
+    const [latestPublishedAt, setLatestPublishedAt] = useState<string | null>(() => getLatestPublishedAt(initialNews.items));
+    const [hasNewArticles, setHasNewArticles] = useState(false);
     const [page, setPage] = useState(initialNews.page);
     const [hasMore, setHasMore] = useState(initialNews.hasMore);
     const [isLoading, setIsLoading] = useState(false);
@@ -56,6 +89,7 @@ export function NewsPage({
     const observerRef = useRef<IntersectionObserver | null>(null);
     const newsFeedAbortRef = useRef<AbortController | null>(null);
     const saveCategoryAbortRef = useRef<AbortController | null>(null);
+    const pollAbortRef = useRef<AbortController | null>(null);
     const categoriesDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const formatPublishedAt = useCallback((value: string | null): string => {
@@ -89,6 +123,10 @@ export function NewsPage({
             const params = new URLSearchParams();
 
             params.set('page', String(targetPage));
+            if (targetPage > 1 && newsItems[0] !== undefined) {
+                params.set('anchor_news_id', String(newsItems[0].id));
+            }
+
             categoryIds.forEach((categoryId) => {
                 params.append('category_ids[]', String(categoryId));
             });
@@ -131,7 +169,7 @@ export function NewsPage({
                 setIsLoading(false);
             }
         }
-    }, [activeCategoryIds, routes.newsFeed]);
+    }, [activeCategoryIds, newsItems, routes.newsFeed]);
 
     const saveSelectedCategories = useCallback(async (categoryIds: number[]): Promise<void> => {
         saveCategoryAbortRef.current?.abort();
@@ -163,35 +201,12 @@ export function NewsPage({
         }
     }, [csrfToken, routes.saveCategorySelection]);
 
-    useEffect(() => {
-        const onScroll = (): void => {
-            setShowScrollTop(window.scrollY > 300);
-        };
-
-        onScroll();
-        window.addEventListener('scroll', onScroll);
-
-        return (): void => {
-            window.removeEventListener('scroll', onScroll);
-        };
-    }, []);
-
-    useEffect(() => {
-        return (): void => {
-            if (categoriesDebounceTimerRef.current !== null) {
-                clearTimeout(categoriesDebounceTimerRef.current);
-            }
-
-            newsFeedAbortRef.current?.abort();
-            saveCategoryAbortRef.current?.abort();
-            observerRef.current?.disconnect();
-        };
-    }, []);
-
     const scheduleCategorySync = useCallback((categoryIds: number[]): void => {
         if (categoriesDebounceTimerRef.current !== null) {
             clearTimeout(categoriesDebounceTimerRef.current);
         }
+
+        setHasNewArticles(false);
 
         const categoryIdsSnapshot = [...categoryIds];
 
@@ -207,6 +222,70 @@ export function NewsPage({
             })();
         }, 1000);
     }, [fetchNews, saveSelectedCategories]);
+
+    const checkForNewArticles = useCallback(async (): Promise<void> => {
+        const knownLatestTimestamp = toTimestamp(latestPublishedAt);
+
+        if (knownLatestTimestamp === null) {
+            return;
+        }
+
+        pollAbortRef.current?.abort();
+        const abortController = new AbortController();
+        pollAbortRef.current = abortController;
+
+        try {
+            const params = new URLSearchParams();
+
+            params.set('page', '1');
+            activeCategoryIds.forEach((categoryId) => {
+                params.append('category_ids[]', String(categoryId));
+            });
+
+            const response = await fetch(`${routes.newsFeed}?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                },
+                credentials: 'same-origin',
+                signal: abortController.signal,
+            });
+
+            if (pollAbortRef.current !== abortController || !response.ok) {
+                return;
+            }
+
+            const payload: NewsPayload = await response.json();
+
+            if (pollAbortRef.current !== abortController) {
+                return;
+            }
+
+            const fetchedLatestPublishedAt = getLatestPublishedAt(payload.items);
+            const fetchedLatestTimestamp = toTimestamp(fetchedLatestPublishedAt);
+
+            if (fetchedLatestTimestamp !== null && fetchedLatestTimestamp > knownLatestTimestamp) {
+                setHasNewArticles(true);
+            }
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                return;
+            }
+
+            throw error;
+        } finally {
+            if (pollAbortRef.current === abortController) {
+                pollAbortRef.current = null;
+            }
+        }
+    }, [activeCategoryIds, getLatestPublishedAt, latestPublishedAt, routes.newsFeed, toTimestamp]);
+
+    const refreshFeedFromTop = useCallback((): void => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setHasNewArticles(false);
+        setExpandedNewsIds([]);
+        void fetchNews(1, true, activeCategoryIds);
+    }, [activeCategoryIds, fetchNews]);
 
     const toggleCategory = useCallback((categoryId: number): void => {
         const nextCategoryIds = activeCategoryIds.includes(categoryId)
@@ -250,6 +329,46 @@ export function NewsPage({
         }
     }, [fetchNews, hasMore, isLoading, page]);
 
+
+    useEffect(() => {
+        const onScroll = (): void => {
+            setShowScrollTop(window.scrollY > 300);
+        };
+
+        onScroll();
+        window.addEventListener('scroll', onScroll);
+
+        return (): void => {
+            window.removeEventListener('scroll', onScroll);
+
+            if (categoriesDebounceTimerRef.current !== null) {
+                clearTimeout(categoriesDebounceTimerRef.current);
+            }
+
+            newsFeedAbortRef.current?.abort();
+            saveCategoryAbortRef.current?.abort();
+            pollAbortRef.current?.abort();
+            observerRef.current?.disconnect();
+        };
+    }, []);
+
+
+    useEffect(() => {
+        setLatestPublishedAt(getLatestPublishedAt(newsItems));
+    }, [getLatestPublishedAt, newsItems]);
+
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            void checkForNewArticles();
+        }, 5 * 60 * 1000);
+
+        return (): void => {
+            window.clearInterval(intervalId);
+            pollAbortRef.current?.abort();
+        };
+    }, [checkForNewArticles]);
+
     return (
         <>
             <NewsHeader
@@ -280,6 +399,10 @@ export function NewsPage({
             <ScrollTopButton
                 isVisible={showScrollTop}
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            />
+            <NewArticlesBadge
+                isVisible={hasNewArticles}
+                onClick={refreshFeedFromTop}
             />
         </>
     );

@@ -39,15 +39,17 @@ class NewsController extends Controller
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['integer', 'exists:categories,id', 'distinct'],
             'page' => ['sometimes', 'integer', 'min:1'],
+            'anchor_news_id' => ['sometimes', 'integer', 'exists:news,id'],
         ]);
 
         $page = (int) ($validated['page'] ?? 1);
+        $anchorNewsId = isset($validated['anchor_news_id']) ? (int) $validated['anchor_news_id'] : null;
         $selectedCategoryIds = collect($validated['category_ids'] ?? [])
             ->map(static fn (mixed $id): int => (int) $id)
             ->values()
             ->all();
 
-        $newsPaginator = $this->buildNewsPaginator($selectedCategoryIds, $page);
+        $newsPaginator = $this->buildNewsPaginator($selectedCategoryIds, $page, $anchorNewsId);
 
         return response()->json($this->transformPaginator($newsPaginator));
     }
@@ -79,15 +81,21 @@ class NewsController extends Controller
     /**
      * @param array<int, int> $selectedCategoryIds
      */
-    private function buildNewsPaginator(array $selectedCategoryIds, int $page): LengthAwarePaginator
+    private function buildNewsPaginator(array $selectedCategoryIds, int $page, ?int $anchorNewsId = null): LengthAwarePaginator
     {
-        return News::query()
+        $query = News::query()
             ->with(['categories:id,name'])
             ->where('status', '=', NewsStatus::DONE->value)
             ->when(
                 $selectedCategoryIds !== [],
                 fn ($query) => $query->whereHas('categories', fn ($categoriesQuery) => $categoriesQuery->whereIn('categories.id', $selectedCategoryIds))
-            )
+            );
+
+        if ($page > 1 && $anchorNewsId !== null) {
+            $query->where('id', '<', $anchorNewsId);
+        }
+
+        return $query
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->paginate(20, ['id','title','image', 'source_url', 'ai_content', 'published_at'], 'page', $page);
