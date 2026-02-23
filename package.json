@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite --mode dev"
     },
     "devDependencies": {
         "@types/react": "^19.1.10",

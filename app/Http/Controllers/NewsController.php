@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\NewsStatus;
 use App\Models\Category;
 use App\Models\News;
+use App\Repositories\CategoryRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -14,26 +15,9 @@ class NewsController extends Controller
 {
     public function index(Request $request): \Illuminate\View\View
     {
-        $selectedCategoryIds = $this->selectedCategoryIds($request);
+        $categories = CategoryRepository::getAllCategories();
+        $selectedCategoryIds = CategoryRepository::getUserSelectedCategoryIds($request->user());
         $newsPaginator = $this->buildNewsPaginator($selectedCategoryIds, 1);
-
-        /** @var array<int,string> */
-        $categories = Cache::remember(
-            'NewsController:categories',
-            now()->addHour(),
-            function (): array {
-                return Category::query()
-                    ->select(['id', 'name'])
-                    ->orderBy('name')
-                    ->get()
-                    ->map(fn (Category $category): array => [
-                        'id' => $category->id,
-                        'name' => $category->name,
-                    ])
-                    ->values()
-                    ->all();
-            }
-        );
 
         return $this->react('NewsPage', [
             'appName' => config('app.name', 'Ai News'),
@@ -107,27 +91,6 @@ class NewsController extends Controller
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->paginate(20, ['id','title','image', 'source_url', 'ai_content', 'published_at'], 'page', $page);
-    }
-
-    /**
-     * @return array<int, int>
-     */
-    private function selectedCategoryIds(Request $request): array
-    {
-        /** @var array<int,string> */
-        return Cache::remember(
-            'NewsController:userCategories_' . $request->user()->id,
-            now()->addHour(),
-            function () use ($request): array {
-                return $request->user()?->categories()
-                    ->select('categories.id')
-                    ->orderBy('categories.id')
-                    ->pluck('categories.id')
-                    ->map(static fn (mixed $id): int => (int) $id)
-                    ->values()
-                    ->all() ?? [];
-            }
-        );
     }
 
     /**

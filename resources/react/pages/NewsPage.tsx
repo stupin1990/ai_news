@@ -56,6 +56,7 @@ export function NewsPage({
     const observerRef = useRef<IntersectionObserver | null>(null);
     const newsFeedAbortRef = useRef<AbortController | null>(null);
     const saveCategoryAbortRef = useRef<AbortController | null>(null);
+    const categoriesDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const formatPublishedAt = useCallback((value: string | null): string => {
         if (value === null) {
@@ -177,37 +178,49 @@ export function NewsPage({
 
     useEffect(() => {
         return (): void => {
+            if (categoriesDebounceTimerRef.current !== null) {
+                clearTimeout(categoriesDebounceTimerRef.current);
+            }
+
             newsFeedAbortRef.current?.abort();
             saveCategoryAbortRef.current?.abort();
             observerRef.current?.disconnect();
         };
     }, []);
 
-    const toggleCategory = useCallback(async (categoryId: number): Promise<void> => {
+    const scheduleCategorySync = useCallback((categoryIds: number[]): void => {
+        if (categoriesDebounceTimerRef.current !== null) {
+            clearTimeout(categoriesDebounceTimerRef.current);
+        }
+
+        const categoryIdsSnapshot = [...categoryIds];
+
+        categoriesDebounceTimerRef.current = setTimeout(() => {
+            void (async (): Promise<void> => {
+                setExpandedNewsIds([]);
+                setNewsItems([]);
+                setHasMore(true);
+                setPage(1);
+                setIsLoading(true);
+                await saveSelectedCategories(categoryIdsSnapshot);
+                await fetchNews(1, true, categoryIdsSnapshot);
+            })();
+        }, 1000);
+    }, [fetchNews, saveSelectedCategories]);
+
+    const toggleCategory = useCallback((categoryId: number): void => {
         const nextCategoryIds = activeCategoryIds.includes(categoryId)
             ? activeCategoryIds.filter((id) => id !== categoryId)
             : [...activeCategoryIds, categoryId];
 
-        setExpandedNewsIds([]);
-        setNewsItems([]);
-        setHasMore(true);
-        setPage(1);
-        setIsLoading(true);
         setActiveCategoryIds(nextCategoryIds);
-        await saveSelectedCategories(nextCategoryIds);
-        await fetchNews(1, true, nextCategoryIds);
-    }, [fetchNews, saveSelectedCategories]);
+        scheduleCategorySync(nextCategoryIds);
+    }, [activeCategoryIds, scheduleCategorySync]);
 
-    const resetCategory = useCallback(async (): Promise<void> => {
-        setExpandedNewsIds([]);
-        setNewsItems([]);
-        setHasMore(true);
-        setPage(1);
-        setIsLoading(true);
+    const resetCategory = useCallback((): void => {
         setActiveCategoryIds([]);
-        await saveSelectedCategories([]);
-        await fetchNews(1, true, []);
-    }, [fetchNews, saveSelectedCategories]);
+        scheduleCategorySync([]);
+    }, [scheduleCategorySync]);
 
     const toggleNews = (newsId: number): void => {
         setExpandedNewsIds((currentIds) => (

@@ -2,8 +2,6 @@
 
 namespace App\Services\News;
 
-use Illuminate\Support\Carbon;
-
 /**
  * @phpstan-type serializedItem array{source:string,external_id:string,title:string,slug:string,source_url:string,image:string,published_at:string}
  */

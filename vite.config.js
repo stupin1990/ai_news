@@ -26,42 +26,55 @@ function devStatusLogger() {
     };
 }
 
-export default defineConfig({
-    plugins: [
-        laravel({
-            input: ['resources/react/app.tsx'],
-            refresh: true,
-        }),
-        tailwindcss(),
-        react(),
-        devStatusLogger(),
-    ],
-    server: {
-        host: '0.0.0.0',
-        port: 5173,
-        strictPort: true,
-        hmr: {
-            host: 'localhost',
+export default defineConfig(({ mode }) => {
+    const isDevProfile = mode === 'dev' || mode === 'development';
+
+    return {
+        esbuild: {
+            sourcemap: isDevProfile,
+        },
+        css: {
+            devSourcemap: isDevProfile,
+        },
+        plugins: [
+            laravel({
+                input: ['resources/react/app.tsx'],
+                refresh: true,
+            }),
+            tailwindcss(),
+            react(),
+            devStatusLogger(),
+        ],
+        build: {
+            sourcemap: isDevProfile,
+        },
+        server: {
+            host: '0.0.0.0',
             port: 5173,
+            strictPort: true,
+            hmr: {
+                host: 'localhost',
+                port: 5173,
+            },
+            watch: {
+                usePolling: true,
+                interval: 100,
+                binaryInterval: 300,
+                ignored: [
+                    '**/.git/**',
+                    '**/node_modules/**',
+                    '**/vendor/**',
+                    '**/storage/framework/views/**',
+                    '**/storage/logs/**',
+                    '**/app/**',
+                    '**/bootstrap/**',
+                    '**/config/**',
+                    '**/database/**',
+                    '**/docker/**',
+                    '**/routes/**',
+                    '**/tests/**',
+                ],
+            },
         },
-        watch: {
-            usePolling: true,
-            interval: 100,
-            binaryInterval: 300,
-            ignored: [
-                '**/.git/**',
-                '**/node_modules/**',
-                '**/vendor/**',
-                '**/storage/framework/views/**',
-                '**/storage/logs/**',
-                '**/app/**',
-                '**/bootstrap/**',
-                '**/config/**',
-                '**/database/**',
-                '**/docker/**',
-                '**/routes/**',
-                '**/tests/**',
-            ],
-        },
-    },
+    };
 });
