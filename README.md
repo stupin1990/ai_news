@@ -8,3 +8,5 @@ News aggregator with AI-powered short summary generation.
 5. docker compose exec php php artisan key:generate
 6. docker compose exec php php artisan migrate --force
 7. docker compose exec php php artisan optimize
+9. docker compose exec php npm i
+10. docker compose exec php npm run build
