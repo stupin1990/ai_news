@@ -92,7 +92,8 @@ services:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 40s
     networks:
       - ai_news_network
 
