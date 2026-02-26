@@ -5,6 +5,7 @@ LABEL maintainer="AI News Project"
 ARG WWWGROUP=1000
 ARG WWWUSER=1000
 ARG NODE_VERSION=22
+ARG INSTALL_XDEBUG=true
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -55,10 +56,14 @@ RUN docker-php-ext-install -j$(nproc) \
     sockets \
     exif
 
-# Install Xdebug and Redis via PECL
-RUN pecl install xdebug \
-    && pecl install redis \
-    && docker-php-ext-enable xdebug redis
+# Install Redis via PECL
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
+# Optionally install Xdebug
+RUN if [ "$INSTALL_XDEBUG" = "true" ] ; then \
+        pecl install xdebug && docker-php-ext-enable xdebug ; \
+    fi
 
 # Xdebug configuration
 RUN echo "xdebug.mode=\${XDEBUG_MODE}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
