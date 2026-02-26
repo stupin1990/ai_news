@@ -6,6 +6,8 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.server.yml}"
 APP_SERVICE="${APP_SERVICE:-php}"
 
+chown -R 1000:1000 "$PROJECT_DIR"
+
 cd "$PROJECT_DIR"
 
 if [ ! -f "$COMPOSE_FILE" ]; then
@@ -22,6 +24,8 @@ if ! command -v docker >/dev/null 2>&1; then
   echo "[ERROR] docker is not installed"
   exit 1
 fi
+
+git config --global --add safe.directory "$PROJECT_DIR" || true
 
 echo "[1/9] Updating git repository..."
 git fetch --all --prune
