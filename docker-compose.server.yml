@@ -171,6 +171,8 @@ volumes:
     driver: local
   rabbitmq_data:
     driver: local
+  pgadmin_data:
+    driver: local
 
 networks:
   ai_news_network:
