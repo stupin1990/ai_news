@@ -53,6 +53,7 @@ fi
 
 echo "[7/9] Running database migrations..."
 docker compose -f "$COMPOSE_FILE" exec -T "$APP_SERVICE" php artisan migrate --force --no-interaction
+docker compose -f "$COMPOSE_FILE" exec -T "$APP_SERVICE" php artisan db:seed --force --no-interaction
 
 echo "[8/9] Building frontend assets and optimizing Laravel..."
 docker compose -f "$COMPOSE_FILE" exec -T "$APP_SERVICE" npm ci
