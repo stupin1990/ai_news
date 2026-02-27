@@ -142,6 +142,24 @@ services:
     networks:
       - ai_news_network
 
+  pgadmin:
+    image: dpage/pgadmin4:9
+    container_name: ai_news_pgadmin
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL:-admin@local.test}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD:-change_me_now}"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    networks:
+      - ai_news_network
+
 volumes:
   pgsql_data:
     driver: local
