@@ -27,13 +27,5 @@ class AppServiceProvider extends ServiceProvider
         Auth::provider('config-admins', function ($app, array $config): ConfigAdminUserProvider {
             return new ConfigAdminUserProvider(config('admin.admins', []));
         });
-
-        RateLimiter::for('registration', function (Request $request) {
-            return Limit::perMinutes(5, 1)->by($request->ip())->response(function () {
-                return back()->withErrors([
-                    'email' => 'Too many registration attempts. Please try again in 5 minutes.',
-                ]);
-            });
-        });
     }
 }
