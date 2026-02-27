@@ -91,6 +91,48 @@ export function NewsPage({
     const saveCategoryAbortRef = useRef<AbortController | null>(null);
     const pollAbortRef = useRef<AbortController | null>(null);
     const categoriesDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const firstNewsIdRef = useRef<number | null>(initialNews.items[0]?.id ?? null);
+    const virtualizerRef = useRef<any>(null);
+
+    const buildNewsFeedParams = useCallback((
+        targetPage: number,
+        categoryIds: number[],
+        anchorNewsId: number | null = null,
+    ): URLSearchParams => {
+        const params = new URLSearchParams();
+
+        params.set('page', String(targetPage));
+
+        if (targetPage > 1 && anchorNewsId !== null) {
+            params.set('anchor_news_id', String(anchorNewsId));
+        }
+
+        categoryIds.forEach((categoryId) => {
+            params.append('category_ids[]', String(categoryId));
+        });
+
+        return params;
+    }, []);
+
+    const requestNewsFeed = useCallback(async (
+        params: URLSearchParams,
+        signal: AbortSignal,
+    ): Promise<NewsPayload | null> => {
+        const response = await fetch(`${routes.newsFeed}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+            },
+            credentials: 'same-origin',
+            signal,
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        return response.json() as Promise<NewsPayload>;
+    }, [routes.newsFeed]);
 
     const formatPublishedAt = useCallback((value: string | null): string => {
         if (value === null) {
@@ -120,37 +162,11 @@ export function NewsPage({
         setIsLoading(true);
 
         try {
-            const params = new URLSearchParams();
+            const anchorNewsId = firstNewsIdRef.current;
+            const params = buildNewsFeedParams(targetPage, categoryIds, anchorNewsId);
+            const payload = await requestNewsFeed(params, abortController.signal);
 
-            params.set('page', String(targetPage));
-            if (targetPage > 1 && newsItems[0] !== undefined) {
-                params.set('anchor_news_id', String(newsItems[0].id));
-            }
-
-            categoryIds.forEach((categoryId) => {
-                params.append('category_ids[]', String(categoryId));
-            });
-
-            const response = await fetch(`${routes.newsFeed}?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-                signal: abortController.signal,
-            });
-
-            if (newsFeedAbortRef.current !== abortController) {
-                return;
-            }
-
-            if (!response.ok) {
-                return;
-            }
-
-            const payload: NewsPayload = await response.json();
-
-            if (newsFeedAbortRef.current !== abortController) {
+            if (newsFeedAbortRef.current !== abortController || payload === null) {
                 return;
             }
 
@@ -169,7 +185,7 @@ export function NewsPage({
                 setIsLoading(false);
             }
         }
-    }, [activeCategoryIds, newsItems, routes.newsFeed]);
+    }, [activeCategoryIds, buildNewsFeedParams, requestNewsFeed]);
 
     const saveSelectedCategories = useCallback(async (categoryIds: number[]): Promise<void> => {
         saveCategoryAbortRef.current?.abort();
@@ -235,29 +251,10 @@ export function NewsPage({
         pollAbortRef.current = abortController;
 
         try {
-            const params = new URLSearchParams();
+            const params = buildNewsFeedParams(1, activeCategoryIds);
+            const payload = await requestNewsFeed(params, abortController.signal);
 
-            params.set('page', '1');
-            activeCategoryIds.forEach((categoryId) => {
-                params.append('category_ids[]', String(categoryId));
-            });
-
-            const response = await fetch(`${routes.newsFeed}?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-                signal: abortController.signal,
-            });
-
-            if (pollAbortRef.current !== abortController || !response.ok) {
-                return;
-            }
-
-            const payload: NewsPayload = await response.json();
-
-            if (pollAbortRef.current !== abortController) {
+            if (pollAbortRef.current !== abortController || payload === null) {
                 return;
             }
 
@@ -278,10 +275,10 @@ export function NewsPage({
                 pollAbortRef.current = null;
             }
         }
-    }, [activeCategoryIds, getLatestPublishedAt, latestPublishedAt, routes.newsFeed, toTimestamp]);
+    }, [activeCategoryIds, buildNewsFeedParams, getLatestPublishedAt, latestPublishedAt, requestNewsFeed, toTimestamp]);
 
     const refreshFeedFromTop = useCallback((): void => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0 });
         setHasNewArticles(false);
         setExpandedNewsIds([]);
         void fetchNews(1, true, activeCategoryIds);
@@ -301,13 +298,13 @@ export function NewsPage({
         scheduleCategorySync([]);
     }, [scheduleCategorySync]);
 
-    const toggleNews = (newsId: number): void => {
+    const toggleNews = useCallback((newsId: number): void => {
         setExpandedNewsIds((currentIds) => (
             currentIds.includes(newsId)
                 ? currentIds.filter((id) => id !== newsId)
                 : [...currentIds, newsId]
         ));
-    };
+    }, []);
 
     const lastNewsRef = useCallback((node: HTMLDivElement | null): void => {
         if (isLoading || !hasMore) {
@@ -355,6 +352,7 @@ export function NewsPage({
 
     useEffect(() => {
         setLatestPublishedAt(getLatestPublishedAt(newsItems));
+        firstNewsIdRef.current = newsItems[0]?.id ?? null;
     }, [getLatestPublishedAt, newsItems]);
 
 
@@ -394,11 +392,14 @@ export function NewsPage({
                     onToggleNews={toggleNews}
                     onLastNewsRef={lastNewsRef}
                     formatPublishedAt={formatPublishedAt}
+                    virtualizerRef={virtualizerRef}
                 />
             </main>
             <ScrollTopButton
                 isVisible={showScrollTop}
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => {
+                    window.scrollTo({ top: 0 });
+                }}
             />
             <NewArticlesBadge
                 isVisible={hasNewArticles}
