@@ -1,4 +1,4 @@
-export { AuthPage } from './AuthPage';
-export { NewsPage } from './NewsPage';
-export { ResetPasswordPage } from './ResetPasswordPage';
-export { VerifyEmailPage } from './VerifyEmailPage';
+export { AuthPage } from './auth/AuthPage';
+export { NewsPage } from './news/NewsPage';
+export { VerifyEmailPage } from './auth/VerifyEmailPage';
+export { ResetPasswordPage } from './auth/ResetPasswordPage';

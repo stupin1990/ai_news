@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getCsrfToken } from '../utils/csrf';
+import { getCsrfToken } from '../../utils/csrf';
 import { CategoryFilter, NewArticlesBadge, NewsHeader, NewsList, ScrollTopButton } from './components';
 
 export interface Category {

@@ -1,4 +1,4 @@
-import { getCsrfToken } from '../utils/csrf';
+import { getCsrfToken } from '../../utils/csrf';
 import { StatusAlert, VerifyEmailForm } from './components';
 
 interface VerifyEmailPageProps {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getCsrfToken } from '../utils/csrf';
+import { getCsrfToken } from '../../utils/csrf';
 import { EmailForm, ErrorsAlert, LoginButtons, RegisterForm, PasswordForm, StatusAlert } from './components';
 
 export type AuthView = 'buttons' | 'email' | 'register' | 'password';

@@ -1,4 +1,4 @@
-import { getCsrfToken } from '../utils/csrf';
+import { getCsrfToken } from '../../utils/csrf';
 import { ErrorsAlert, ResetPasswordForm } from './components';
 
 interface ResetPasswordPageProps {
