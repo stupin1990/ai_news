@@ -89,6 +89,10 @@ return [
             'options' => [
                 'queue' => [
                     'prefetch_count' => 1,
+                    'durable' => true,
+                ],
+                'message' => [
+                    'delivery_mode' => 2,
                 ],
             ],
             'retry_after' => (int) env('RABBITMQ_RETRY_AFTER', 90),
