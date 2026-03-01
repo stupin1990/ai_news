@@ -29,19 +29,12 @@ export function NewsListItem({
             data-index={index}
             ref={(node) => {
                 onMeasureElement(node);
-
                 if (isLastItem) {
                     onLastNewsRef(node);
                 }
             }}
-            style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${translateY}px)`,
-            }}
-            className="pb-4"
+            style={{['--news-item-translate-y' as string]: `${translateY}px`}}
+            className="absolute top-0 left-0 w-full transform-[translateY(var(--news-item-translate-y))] pb-4"
         >
             <div className="rounded border border-gray-200 p-4 dark:border-[#3E3E3A]">
                 <button
@@ -49,11 +42,11 @@ export function NewsListItem({
                     className="w-full cursor-pointer text-left"
                     onClick={() => onToggleNews(newsItem.id)}
                 >
-                    <div className="flex items-start gap-4">
-                        <div className="flex h-28 w-44 shrink-0 items-center justify-center overflow-hidden bg-black">
+                    <div className="flex items-start gap-4 [@media(max-width:767px)_and_(orientation:portrait)]:flex-col">
+                        <div className="flex h-28 w-44 shrink-0 items-center justify-center overflow-hidden bg-black [@media(max-width:767px)_and_(orientation:portrait)]:h-52 [@media(max-width:767px)_and_(orientation:portrait)]:w-full">
                             <NewsImage src={newsItem.image} alt={newsItem.title} />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 [@media(max-width:767px)_and_(orientation:portrait)]:w-full">
                             <h2 className="text-xl font-semibold">{newsItem.title}</h2>
                             <p className="mt-2 text-sm text-gray-600 dark:text-[#A1A09A]">
                                 {newsItem.categories.map((category) => category.name).join(', ') || 'No categories'}

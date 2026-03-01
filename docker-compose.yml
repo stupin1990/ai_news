@@ -120,7 +120,7 @@ services:
     working_dir: /var/www/html
     command: php artisan queue:work --queue=GetNewsAiContent,GetNewsContent --tries=3 --backoff=10
     deploy:
-      replicas: 10
+      replicas: 5
     volumes:
       - ./:/var/www/html
     extra_hosts:

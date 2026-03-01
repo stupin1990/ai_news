@@ -56,11 +56,8 @@ export function NewsList({
     return (
         <div ref={listRef} className="mt-6">
             <div
-                style={{
-                    height: `${virtualizer.getTotalSize()}px`,
-                    width: '100%',
-                    position: 'relative',
-                }}
+                style={{['--news-list-height' as string]: `${virtualizer.getTotalSize()}px`}}
+                className={'w-full relative h-[var(--news-list-height)]'}
             >
                 {virtualizer.getVirtualItems().map((virtualItem) => {
                     const newsItem = newsItems[virtualItem.index];
