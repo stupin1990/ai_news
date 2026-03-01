@@ -110,7 +110,7 @@ services:
         INSTALL_XDEBUG: "false"
     restart: unless-stopped
     working_dir: /var/www/html
-    command: php artisan queue:work --queue=GetNewsAiContent,GetNewsContent --tries=3 --backoff=10 --max-time=3600 --no-interaction
+    command: supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
     volumes:
       - ./:/var/www/html
     depends_on:
