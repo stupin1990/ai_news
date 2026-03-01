@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
         plugins: [
             laravel({
                 input: ['resources/react/app.tsx'],
-                refresh: true,
+                refresh: ['resources/**'],
             }),
             tailwindcss(),
             react(),
@@ -60,20 +60,11 @@ export default defineConfig(({ mode }) => {
                 usePolling: true,
                 interval: 100,
                 binaryInterval: 300,
-                ignored: [
-                    '**/.git/**',
-                    '**/node_modules/**',
-                    '**/vendor/**',
-                    '**/storage/framework/views/**',
-                    '**/storage/logs/**',
-                    '**/app/**',
-                    '**/bootstrap/**',
-                    '**/config/**',
-                    '**/database/**',
-                    '**/docker/**',
-                    '**/routes/**',
-                    '**/tests/**',
-                ],
+                ignored: (filePath) => {
+                    const normalizedPath = filePath.replace(/\\/g, '/');
+
+                    return !normalizedPath.includes('/resources/');
+                },
             },
         },
     };

@@ -19,6 +19,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'remember' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -31,6 +32,7 @@ class LoginRequest extends FormRequest
             'email.required' => 'Email is required.',
             'email.email' => 'Please enter a valid email address.',
             'password.required' => 'Password is required.',
+            'remember.boolean' => 'Remember me must be a valid value.',
         ];
     }
 }

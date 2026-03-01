@@ -30,7 +30,10 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): RedirectResponse
     {
-        if (! Auth::attempt($request->validated())) {
+        $credentials = $request->safe()->only(['email', 'password']);
+        $remember = $request->boolean('remember');
+
+        if (! Auth::attempt($credentials, $remember)) {
             return back()->withErrors(['email' => 'Invalid credentials.'])->withInput();
         }
 
@@ -193,6 +196,7 @@ class AuthController extends Controller
             'old' => [
                 'name' => old('name'),
                 'email' => old('email'),
+                'remember' => old('remember'),
             ],
             'routes' => [
                 'google' => route('auth.google'),

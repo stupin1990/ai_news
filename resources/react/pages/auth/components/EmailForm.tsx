@@ -27,6 +27,17 @@ export function EmailForm({routes, csrfToken, old, switchView}: FormProps) {
                         className="w-75 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-[#3E3E3A] dark:bg-[#161615]"
                     />
                 </div>
+                <div className="flex items-center gap-2">
+                    <input
+                        id="login-remember"
+                        name="remember"
+                        type="checkbox"
+                        value="1"
+                        defaultChecked={Boolean(old?.remember)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-[#3E3E3A] dark:bg-[#161615]"
+                    />
+                    <label htmlFor="login-remember" className="text-sm font-medium">Remember me</label>
+                </div>
                 <div className="mt-2 flex items-center gap-3">
                     <button
                         type="submit"

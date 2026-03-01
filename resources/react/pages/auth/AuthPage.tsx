@@ -21,6 +21,7 @@ export interface FormProps {
 export interface OldInput {
     name?: string;
     email?: string;
+    remember?: string | boolean;
 }
 
 export type SwitchView = (view: AuthView, pushHistory: boolean) => void;
