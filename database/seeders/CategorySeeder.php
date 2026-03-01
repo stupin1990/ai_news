@@ -25,11 +25,14 @@ class CategorySeeder extends Seeder
             'World News'
         ];
 
-        foreach ($names as $name) {
-            Category::query()->create([
-                'name' => $name,
-                'slug' => Str::slug($name),
-            ]);
+        try {
+            foreach ($names as $name) {
+                Category::query()->create([
+                    'name' => $name,
+                    'slug' => Str::slug($name),
+                ]);
+            }
         }
+        catch (\Throwable $e) {}
     }
 }
