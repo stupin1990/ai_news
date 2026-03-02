@@ -9,7 +9,7 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/login/email', [AuthController::class, 'showLoginEmail'])->name('login.email');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:registration')->name('register.submit');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
     Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
     Route::get('/password', [AuthController::class, 'showForgotPassword'])->name('password.request');
